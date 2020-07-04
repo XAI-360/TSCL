@@ -10,7 +10,7 @@ These algorithms depend strongly on data augmentation and therefore are mostly f
 
 
 
-![Fig. 3](./static/simCLR.png)  
+![Fig. 3](./docs/static/simCLR.png)
 
 *Fig. 1: A simple framework for contrastive learning of visual representations. Two separate data augmentation operators are sampled from the same family of augmentations and applied to each data example to obtain two correlated views. A base encoder network f(·) and a projection head g(·) are trained to maximize agreement using a contrastive loss. After training is completed, we throw away the projection head g(·) and use encoder f(·) and representation h for downstream tasks - from [[1](https://arxiv.org/pdf/2002.05709.pdf)].*
 
@@ -40,7 +40,7 @@ After training, the encoder activity map is the sparse representaiton. In additi
 
 
 
-![Fig. 1](./static/wta_conv.png) 
+![Fig. 1](./docs/static/wta_conv.png)
 
 *Fig. 2: Architecture for CONV-WTA autoencoder with spatial sparsity [[10](https://papers.nips.cc/paper/5783-winner-take-all-autoencoders.pdf)]*.
 
@@ -60,9 +60,9 @@ where $m>0$ is margin. Here, we assume $m=1$.
 
 
 
-![Fig. 2](./static/siamese_example.png)*Fig. 3: Siamese Network [[3](https://leimao.github.io/article/Siamese-Network-MNIST/)]. $W$ is shared in two models*. 
+![Fig. 2](./docs/static/siamese_example.png)
 
- 
+*Fig. 3: Siamese Network [[3](https://leimao.github.io/article/Siamese-Network-MNIST/)]. $W$ is shared in two models*. 
 
 ## Proposed Algorithm
 
@@ -77,7 +77,7 @@ The data used here is coming from Individual Conditional Expectation (ICE) plots
 
  Here are few samples of the data:
 
-![Fig. 5](./static/data_sample.png) 
+![Fig. 5](./docs/static/data_sample.png)
 
 *Fig 4.: Samples of the training data*
 
@@ -146,7 +146,7 @@ Non-trainable params: 0
 
 Here are the decoder wights that act as the dictionary atoms:
 
-![Fig. 4](./static/dictionary_atoms.png)
+![Fig. 4](./docs/static/dictionary_atoms.png)
 
 *Fig. 5: Decoder Kernel weights which are similar to the dictionary atoms.*
 
@@ -156,11 +156,11 @@ There are 20 filters which creates 20 dictionary atoms (creating a over-complete
 
 Here is some examples of the positive pairs generated using sparse dictionary coding:
 
-![Fig. 7](./static/PositivePairs_1.png)
+![Fig. 7](./docs/static/PositivePairs_1.png)
 
-![Fig. 7](./static/PositivePairs_2.png)
+![Fig. 7](./docs/static/PositivePairs_2.png)
 
-![Fig. 7](./static/PositivePairs_3.png)
+![Fig. 7](./docs/static/PositivePairs_3.png)
 
 *Fig. 6: Some examples of positive pairs.*
 
@@ -170,11 +170,11 @@ As can be seen the true signal (red) and the one re-created by the decoder (blue
 
 And this is how the negative pairs look like:
 
-![Fig. 7](./static/NegativePairs_1.png)
+![Fig. 7](./docs/static/NegativePairs_1.png)
 
-![Fig. 7](./static/NegativePairs_2.png)
+![Fig. 7](./docs/static/NegativePairs_2.png)
 
-![Fig. 7](./static/NegativePairs_3.png)
+![Fig. 7](./docs/static/NegativePairs_3.png)
 
 *Fig. 7: Some Examples of negative pairs.*
 
@@ -184,16 +184,26 @@ The generated negative pairs do not share the same context, meaning the overal b
 
 Using the generated negative and positve pairs a Siamese Network is trained using equation (2). Here are some examples of the most similar samples based on the Siamese Network's output.
 
-![Fig. 7](./static/similars_1.png)
+![Fig. 7](./docs/static/similars_1.png)
 
-![Fig. 7](./static/similars_2.png)
+![Fig. 7](./docs/static/similars_2.png)
 
-![Fig. 7](./static/similars_3.png)
+![Fig. 7](./docs/static/similars_3.png)
 
-![Fig. 7](./static/similars_4.png)
+![Fig. 7](./docs/static/similars_4.png)
 
 *Fig. 8: Examples of most similar samples according to the Siamese Network.*
 
 
 
 As could be seen the network learns to find the samples with very similar behaviours. 
+
+There are some failure cases too. For example Fig. 9 shows one of the samples and the similar pairs found by the model. 
+
+![Fig. 9](./docs/static/similars_fail.png)
+
+*Fig. 9: samples with very different behaviours and similar representations in Siamese Network.*
+
+## Limitations & Future Work
+
+The main goal of this post is to sratrt a discussion about the possibility of using sparse coding for time-series augmentations. The framework we used here has many limitations. For instance, the training data may not be a good representitive of real time-series, due to its limited length and size. In addition, the model we used in Siamese Nework is a fully connected network (MLP), which is not the structure of the choice for the time-series models. To improve the framework, newer contrastive learning algorithms could be combined with recurrent models. 
