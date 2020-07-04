@@ -1,7 +1,5 @@
 # Towards Contrastive Learning for Time-Series 
 
-Masoud Hashemi, Elham Karami
-
 <https://xai-360.github.io/TSCL/>
 
 
