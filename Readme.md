@@ -1,5 +1,9 @@
 # Towards Contrastive Learning for Time-Series 
 
+Masoud Hashemi, Elham Karami
+
+<https://xai-360.github.io/TSCL/>
+
 
 
 Semi-supervised learning and Contrastive Learning (CL) has gained a huge attention recently, thanks to the success gained by algorithms such as SimCLR [[1](https://arxiv.org/pdf/2002.05709.pdf), [2](https://arxiv.org/pdf/2003.04297.pdf)].
