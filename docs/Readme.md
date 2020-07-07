@@ -6,11 +6,11 @@ Masoud Hashemi, Elham Karami
 
 
 
-Semi-supervised learning and Contrastive Learning (CL) has gained a huge attention recently, thanks to the success gained by algorithms such as SimCLR [[1](https://arxiv.org/pdf/2002.05709.pdf), [2](https://arxiv.org/pdf/2003.04297.pdf)].
+Semi-supervised learning and Contrastive Learning (CL) have gained wide attention recently, thanks to the success of recent works such as SimCLR [[1](https://arxiv.org/pdf/2002.05709.pdf), [2](https://arxiv.org/pdf/2003.04297.pdf)].
 
-Contrastive learning is a learning paradigm where we want to learn distinctiveness. We want to learn what makes two objects similar or different. And if two things are similar, then we want the encodings for these two things to be similar as well. Algorithms like SimCLR learn representations by maximizing the agreement between differently augmented views of the same data example via contrastive loss in the latent space. 
+Contrastive learning is a learning paradigm where we want the model to learn similar encodings for similar objects and different encodings for non-similar objects. Therefore, we want the model to learn distinctiveness. 
 
-These algorithms depend strongly on data augmentation and therefore are mostly focused on image representation, since producing meaningful augmented samples is reltaively easy in images compared to other data types. 
+Algorithms like SimCLR learn such representations by maximizing the agreement between differently augmented views of the same data example via contrastive loss in the latent space. Therefore, these algorithms depend strongly on data augmentation. Since producing meaningful augmented samples is relatively easy for images compared to other data types, contrastive learning algorithms are mostly focused on image representation. Fig. 1 shows a simple framework for contrastive learning of visual representations where $x_i​$ and $x_j​$ are two correlated views of $x​$ generated through data augmentation. A base encoder network $f(·)​$ and a projection head $g(·)​$ are trained to maximize agreement between encodings of $x_i​$ and $x_j​$ using a contrastive loss. After training is completed, the representation $h​$ is used for downstream tasks (e.g. classification).
 
 
 
@@ -20,43 +20,43 @@ These algorithms depend strongly on data augmentation and therefore are mostly f
 
 
 
-In this blog post we explore a potential solution that extends the application of the contrastive learning to time-series using **sparse dictionary learning**. Sparse dictionary learning encodes the semantics of the data by learning dictionary atoms that can be used to sparsely encode the data. The core of our idea here is that using the sparse representation of the time-series, it can be augmented without loosing its semantics.
+Now, how can we use contrastive learning for time series data? More specifically, how can we generate similar and non-similar pairs of time-series data type to be used for contrastive learning? In this blog post, we explore a potential solution for time-series data augmentation that extends the application of contrastive learning to time-series. The proposed solution is based on sparse dictionary learning. 
 
-Our contrastive learning framework for time-series includes augmenting the data using sparse dictionary encoding and using contrastive loss to learn representations of the data. For contrastive learning we use Siamese Network [[3](https://leimao.github.io/article/Siamese-Network-MNIST/), [4](http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf)], a classic contrastive learning network. By introducing multiple input channels in the network and appropriate loss functions, the Siamese Network is able to learn to represent similar inputs with similar embedding features and represent different inputs with different embedding features. 
+Sparse coding is a representation learning method which aims at finding a sparse representation of the input data (also known as sparse coding) in the form of a linear combination of basic elements as well as those basic elements themselves. These elements are called atoms and they compose a dictionary. Atoms in the dictionary are not required to be orthogonal, and they may be an over-complete spanning set. This problem setup also allows the dimensionality of the signals being represented to be higher than the one of the signals being observed. The above two properties lead to having seemingly redundant atoms that allow multiple representations of the same signal but also provide an improvement in sparsity and flexibility of the representation [[3](https://en.wikipedia.org/wiki/Sparse_dictionary_learning)].
+
+The core idea of this blog post is that once a time-series instance is projected to a sparse space, one can create similar examples by changing the weights of the original components in the sparse space. Therefore, data augmentation can be done without losing semantics.
+
+In summary, our contrastive learning framework for time-series data consists of two steps:  1) augmenting the time-series data using sparse dictionary encoding, and 2) using the contrastive loss to learn representations of the data. For contrastive learning, we use Siamese Network [[4](https://leimao.github.io/article/Siamese-Network-MNIST/), [5](http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf)], a classic contrastive learning network. By introducing multiple input channels in the network and appropriate loss functions, the Siamese Network is able to learn similar encodings for similar inputs and different encodings for different inputs.
+
+
 
 ## Sparse Dcitionary Learning
 
-Dictionary learning aims at finding an over-complete set of dictionary atoms in which data admits a sparse representation. These dictionary atoms may not be orthogonal. The most important principle of the dictionary learning is that the atoms are learned from the data itself, which makes them different from DCT, Fourier transform, Wavelets transform, and other general signal representation algorithms. The dictionaries and the sparse representations are learned by solving the following optimization problem:
+Dictionary learning aims at finding an over-complete set of dictionary atoms where data admits a sparse representation. The most important principle of dictionary learning is that the atoms are learned from the data itself, which makes this method different from DCT, Fourier transform, Wavelet transform, and other generic signal representation algorithms. The dictionaries, and the sparse representations are learned by solving the following optimization problem:
 $$
 argmin_{D, \alpha} \Sigma_{i=1}^K \| x_i - D\alpha_i  \|_2^2 + \lambda \| \alpha_i \|_0
 $$
-where we aim to represent the data $X=[x_1 , x_2, ..., x_K], x_i \in R^d$  using dictionary $D \in R^{d \times n}$ and representation $\alpha=[\alpha_1,...,\alpha_K], \alpha_i \in R^n$ such that $\|X - D \alpha \|^2_F$ is minimized and $\alpha$ is sparse enough. The level of sparsity is controled with $\lambda$ which is a positive regularization constatnt. The $\ell_0$ contraint can be relaxed to a convex $\ell_p$ norm. 
+where we aim to represent the data $X=[x_1 , x_2, ..., x_K], x_i \in R^d$ using dictionary $D \in R^{d \times n}$ and representation $\alpha=[\alpha_1,...,\alpha_K], \alpha_i \in R^n$ such that $|X - D \alpha |^2_F$ is minimized and $\alpha$ is sparse enough. The level of sparsity is controlled with $\lambda$ which is a positive regularization constant. The $\ell_0$ constraint can be relaxed to a convex $\ell_p$ norm.
 
-Solving this optimization problem usually is based on altering between solving for $D$ and $\alpha$, using methods like k-SVD [[5](https://sites.fas.harvard.edu/~cs278/papers/ksvd.pdf)], LASSO [[6](https://arxiv.org/pdf/0804.1302.pdf)], OMP [[7](https://openaccess.thecvf.com/content_iccv_2013/papers/Bao_Fast_Sparsity-Based_Orthogonal_2013_ICCV_paper.pdf)], ADMM [[8](http://ai.stanford.edu/~wzou/zou_bhaskar.pdf)] and FISTA [[9](https://people.rennes.inria.fr/Cedric.Herzet/Cedric.Herzet/Sparse_Seminar/Entrees/2012/11/12_A_Fast_Iterative_Shrinkage-Thresholding_Algorithmfor_Linear_Inverse_Problems_(A._Beck,_M._Teboulle)_files/Breck_2009.pdf)].
+Solving this optimization problem usually is based on altering between solving for $D$ and $\alpha$, using methods like k-SVD [[6](https://sites.fas.harvard.edu/~cs278/papers/ksvd.pdf)], LASSO [[7](https://arxiv.org/pdf/0804.1302.pdf)], OMP [[8](https://openaccess.thecvf.com/content_iccv_2013/papers/Bao_Fast_Sparsity-Based_Orthogonal_2013_ICCV_paper.pdf)], ADMM [[9](http://ai.stanford.edu/~wzou/zou_bhaskar.pdf)] and FISTA [[10](https://people.rennes.inria.fr/Cedric.Herzet/Cedric.Herzet/Sparse_Seminar/Entrees/2012/11/12_A_Fast_Iterative_Shrinkage-Thresholding_Algorithmfor_Linear_Inverse_Problems_(A._Beck,_M._Teboulle)_files/Breck_2009.pdf)].
 
 ### Winner-Take-All Autoencoders
 
-To learn the sparse dictionaries, we use auto-encoders and more specifically `Winner-Take-All Autoencoders` [[10](https://papers.nips.cc/paper/5783-winner-take-all-autoencoders.pdf)]. The idea is to learn an encoder and a decoder as we do in all autoencoders, but after computing the last feature maps of the encoder, rather than reconstructing the input from all of the hidden units of the feature maps, we identify the single largest hidden activity within each feature map, and set the rest of the activities as well as their derivatives to zero. 
-
-This results in a sparse representation whose sparsity level is the number of feature maps. The decoder then reconstructs the output using only the active hidden units in the feature maps and the reconstruction error is only backpropagated through these hidden units as well.
-
-After training, the encoder activity map is the sparse representaiton. In addition, if a shallow decoder is used, the weights of the decoder would be the atoms of the dictionary. 
+To learn the sparse dictionaries, we use auto-encoders and more specifically the `Winner-Take-All Autoencoders` [[11](https://papers.nips.cc/paper/5783-winner-take-all-autoencoders.pdf)]. WTA autoencoders are similar to other autoencoders except that the goal is to learn sparse representations rather than dense ones. To achieve this goal, after training the encoder the single largest hidden activity of each feature map is kept and the rest (as well as their derivatives) are set to zero. Next, the decoder reconstructs the output from the sparse feature maps. This results in a sparse representation where the sparsity level is the number of non-zero feature maps. It is noteworthy that if a shallow decoder is used, the weights of the decoder are the atoms of the dictionary.
 
 
 
 ![Fig. 1](./static/wta_conv.png)
 
-*Fig. 2: Architecture for CONV-WTA autoencoder with spatial sparsity [[10](https://papers.nips.cc/paper/5783-winner-take-all-autoencoders.pdf)]*.
+*Fig. 2: Architecture for CONV-WTA autoencoder with spatial sparsity [[11](https://papers.nips.cc/paper/5783-winner-take-all-autoencoders.pdf)]*.
 
 
 
 ## Contrastive Learning Method
 
-We use `Dimensionality Reduction by Learning an Invariant Mapping` (DrLIM)  [[4](http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf)] for learning the representations and for unsupervised similar/unsimilar classification of the time-series. 
+We use Dimensionality Reduction by Learning an Invariant Mapping (DrLIM)  [[5](http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf)] for learning the representations and for unsupervised classification of the time-series.
 
-DrLIM learns a family of functions $G$ parameterized with $W$, i.e. neural networks, that maps the inputs to a manifold such that the eucleadian distance between the points in the manifold $D_W(x_1, x_2) = \|G_W(x_1) - G_W(x_2) \|_2$ approximates the similarity of the semantic meaning of $x_1$ and $x_2$. To achieve the goal for each input one pair of similar and one pair of unsimilar samples are created. If we have access to the labels of the data, the similar samples could be two samples from the same class and the unsimilar pair could be from two different classes. If we do not have access to the labels and the input data is an image, we can augment the input image (cropping, skewing, rotating, ...) to create the similar pair. However, creating the unsimilar pair is not as simple. For instance, we can assume that any other sample in the training batch is unsimilar. 
-
-Creating the similar and unsimilar paths, we train a network that lables the similar pair by one, $Y=1$, and labels the unsimilar pair as zero, $Y=0$. To minimize the distance $D_W$ between the simialr samples and to maximize the distance between the unsimilar samples DrLIM uses the following loss function:
+DrLIM works by learning a family of functions $G$ that map the inputs to a manifold such that the euclidean distance between the points on the manifold $D_W(x_1, x_2) = |G_W(x_1) - G_W(x_2) |_2$ approximates the dissimilarity of the semantic meaning of $x_1$ and $x_2$. As an example, $G$ can be a neural network parametrized with $W$. To train the network, each input data point is paired with a similar and dissimilar sample. If we have access to the actual labels, similar samples can come from the same class while dissimilar samples belong to different classes. If we do not have access to the labels and the input data is an image, we can augment the input image (cropping, skewing, rotating, ...) to create a similar pair. Since creating the dissimilar pair is more challenging, a common approach is to assume that all the samples in the training batch are dissimilar.To train the network, the similar pair is labeled as one, $Y=1$, and the dissimilar pair is labeled as zero, $Y=0$. To minimize the distance $D_W$ between the similar samples while maximizing the distance between the dissimilar ones, DrLIM uses the following loss function: 
 $$
 L(W, Y, X_1, X_2) = (Y)(D_W)^2 + (1-Y)\{ min(0, m-D_W)^2 \}
 $$
@@ -66,28 +66,32 @@ where $m>0$ is margin. Here, we assume $m=1$.
 
 ![Fig. 2](./static/siamese_example.png)
 
-*Fig. 3: Siamese Network [[3](https://leimao.github.io/article/Siamese-Network-MNIST/)]. $W$ is shared in two models*. 
+*Fig. 3: Siamese Network [[4](https://leimao.github.io/article/Siamese-Network-MNIST/)]. $W$ is shared in two models*. 
 
 ## Proposed Algorithm
 
 The proposed algorithm has two major steps:
 
-1. Train a sparse autoencoder using Winner Takes All (WTA), with 1D convolutional layers. The training data is taken from sliced time-series data with a fixed length. 
-   1. Use the latent sparse encoding (the encoder output) to create positive pairs by thresholding and adding noise to sparse representations. This creates pairs with similar semantics. 
-   2. Use the latent sparse encoding to create negative pairs by randomly selecting the activation maps that are zero for the sample. This creates pairs with different semantics.
-2. Use the positive and negative pairs to tarin a Siamese Network. 
+1. Use Winner-Take-All (WTA) to learn sparse representations of sliced time-series data with a fixed length.
+   - Create positive pairs (similar semantics) by thresholding and adding noise to the sparse representations.
+   - Create negative pairs (dissimilar semantics) by random switching of the zero and non-zero activations in the sparse representation.
+2. Use the positive and negative pairs to train a Siamese Network.
 
-The data used here is coming from Individual Conditional Expectation (ICE) plots [[11](https://christophm.github.io/interpretable-ml-book/ice.html)] of a model I was analysing and needed to cluster the similar ICE plots to make the interpretation of the model easier. The ICE plots could be thought of as short time-series. Although this is not an ideal data for representing time-series, it has an important factor that I am looking for here: the samples have similar contexts created by varying different features in the input data of the model that could be learned by dictionary learning.
+**Training Data**
 
- Here are few samples of the data:
+Fig. 4 shows a sample of the training data which consists of Individual Conditional Expectation (ICE) plots  [[12](https://christophm.github.io/interpretable-ml-book/ice.html)] for a model we trained earlier. The ICE plots display one line per instance that shows how the instance's prediction changes when a feature changes. Therefore, they can be thought of as short time-series. Although this type of data is not ideal for representing time-series, it has an important property that is required for dictionary learning: the samples have similar context.
+
+
 
 ![Fig. 5](./static/data_sample.png)
 
-*Fig 4.: Samples of the training data*
+*Fig. 4: Samples of the training data*
 
 
 
-**Encoder**: The encoder has two 1D-Convolutional layers with 20 filters, kernel size of 5, and ReLU activations. 
+**Encoder** 
+
+The encoder has two 1D-Convolutional layers with 20 filters, kernel size of 5, and ReLU activations. 
 
 ```
 Model: "Encoder"
@@ -114,7 +118,9 @@ def wtall(X):
     return R
 ```
 
-**Decoder**: Decoder has one of 1D-Convolutional layer with linear activation. Using a shallow decoder enables us to directly use its weights as the dictionary atoms. However, since we do not use the atoms separately this is not a necessary feature. However, since our data is simple here and to be able to plot the dictionary atoms we are going to use only one layer. 
+**Decoder**
+
+Decoder has one of 1D-Convolutional layer with linear activation. Since our data is simple, and also for being able to plot the dictionary atoms, we use only one layer for the decoder.
 
 ```
 Model: "Decoder"
@@ -130,7 +136,7 @@ Trainable params: 101
 Non-trainable params: 0
 ```
 
-Combining the encoder and decoder, the structure of the autoencoer looks like:
+Combining the encoder and decoder, the structure of the autoencoer looks like the following:
 
 ```
 Model: "WTA_AutoEncoder"
@@ -148,7 +154,7 @@ Non-trainable params: 0
 
 
 
-Here are the decoder wights that act as the dictionary atoms:
+Fig. 5 shows the decoder weights that act as the dictionary atoms.
 
 ![Fig. 4](./static/dictionary_atoms.png)
 
@@ -156,37 +162,27 @@ Here are the decoder wights that act as the dictionary atoms:
 
 
 
-There are 20 filters which creates 20 dictionary atoms (creating a over-complete dictionary). The kernel width is 5 which means the length of each dictiotionary atom would be 5 too. As can be seen in Fig. 5 each of the atoms has learned a particular behaviour/contex, e.g. different ways that signal increases, decreases, or increases then decreases. 
-
-Here is some examples of the positive pairs generated using sparse dictionary coding:
+There are 20 filters which create 20 dictionary atoms (creating an over-complete dictionary). The kernel width is 5 which means the length of each dictionary atom is 5 too. As can be seen in Fig. 5, each of the atoms has learned a particular behaviour/context, e.g. different ascending and descending patterns. Fig. 6 shows some examples of the positive pairs generated using sparse dictionary coding.
 
 ![Fig. 7](./static/PositivePairs_1.png)
 
 ![Fig. 7](./static/PositivePairs_2.png)
 
-![Fig. 7](./static/PositivePairs_3.png)
-
 *Fig. 6: Some examples of positive pairs.*
 
 
 
-As can be seen the true signal (red) and the one re-created by the decoder (blue) are very close. The two positive pairs resemble the global behaviour of the original signal while could be different enough to be used in contrastive learning. 
-
-And this is how the negative pairs look like:
+As can be seen in Fig. 6 the true signal (red) and the reconstructed signal  (blue) are very similar. The two positive pairs resemble the global behaviour of the original signal but they are different enough to be used in contrastive learning.Some examples of the generated negative pairs are shown in Fig. 7. As shown in this figure, the generated negative pairs are semantically different.
 
 ![Fig. 7](./static/NegativePairs_1.png)
 
 ![Fig. 7](./static/NegativePairs_2.png)
 
-![Fig. 7](./static/NegativePairs_3.png)
-
 *Fig. 7: Some Examples of negative pairs.*
 
 
 
-The generated negative pairs do not share the same context, meaning the overal behaviour of the negative pairs are completely different. 
-
-Using the generated negative and positve pairs a Siamese Network is trained using equation (2). Here are some examples of the most similar samples based on the Siamese Network's output.
+Using the generated negative and positive pairs, a Siamese Network is trained using Equation (2). Fig. 8 represents some examples of the most similar samples based on the encodings learned by the Siamese Network. As can be seen, the learned representations for similar samples are very close. Therefore, the representations can be used to find the most semantically similar time-series instances.
 
 ![Fig. 7](./static/similars_1.png)
 
@@ -200,14 +196,12 @@ Using the generated negative and positve pairs a Siamese Network is trained usin
 
 
 
-As could be seen the network learns to find the samples with very similar behaviours. 
-
-There are some failure cases too. For example Fig. 9 shows one of the samples and the similar pairs found by the model. 
+As expected, there are some failure cases where the samples are semantically different but the learned representations are very close. Some examples are shown in Fig. 9.
 
 ![Fig. 9](./static/similars_fail.png)
 
-*Fig. 9: samples with very different behaviours and similar representations in Siamese Network.*
+*Fig. 9: Semantically different samples with similar representations in Siamese Network.*
 
 ## Limitations & Future Work
 
-The main goal of this post is to sratrt a discussion about the possibility of using sparse coding for time-series augmentations. The framework we used here has many limitations. For instance, the training data may not be a good representitive of real time-series, due to its limited length and size. In addition, the model we used in Siamese Nework is a fully connected network (MLP), which is not the structure of the choice for the time-series models. To improve the framework, newer contrastive learning algorithms could be combined with recurrent models. 
+The main goal of this blog post is to begin a discussion about the possibility of using sparse coding for time-series data augmentation. The framework proposed here is for proof of concept and it should be improved for real-life scenarios. For instance, the training data might not be a good representative of real time-series data, due to its limited length and size. In addition, the Siamese Network is a fully connected network (MLP), which is not the structure of choice for time-series models. 
