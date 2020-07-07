@@ -56,7 +56,9 @@ To learn the sparse dictionaries, we use auto-encoders and more specifically the
 
 We use Dimensionality Reduction by Learning an Invariant Mapping (DrLIM)  [[5](http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf)] for learning the representations and for unsupervised classification of the time-series.
 
-DrLIM works by learning a family of functions $G$ that map the inputs to a manifold such that the euclidean distance between the points on the manifold $D_W(x_1, x_2) = |G_W(x_1) - G_W(x_2) |_2$ approximates the dissimilarity of the semantic meaning of $x_1$ and $x_2$. As an example, $G$ can be a neural network parametrized with $W$. To train the network, each input data point is paired with a similar and dissimilar sample. If we have access to the actual labels, similar samples can come from the same class while dissimilar samples belong to different classes. If we do not have access to the labels and the input data is an image, we can augment the input image (cropping, skewing, rotating, ...) to create a similar pair. Since creating the dissimilar pair is more challenging, a common approach is to assume that all the samples in the training batch are dissimilar.To train the network, the similar pair is labeled as one, $Y=1$, and the dissimilar pair is labeled as zero, $Y=0$. To minimize the distance $D_W$ between the similar samples while maximizing the distance between the dissimilar ones, DrLIM uses the following loss function: 
+DrLIM works by learning a family of functions $G$ that map the inputs to a manifold such that the euclidean distance between the points on the manifold $D_W(x_1, x_2) = |G_W(x_1) - G_W(x_2) |_2$ approximates the dissimilarity of the semantic meaning of $x_1$ and $x_2$. As an example, $G$ can be a neural network parametrized with $W$. To train the network, each input data point is paired with a similar and dissimilar sample. If we have access to the actual labels, similar samples can come from the same class while dissimilar samples belong to different classes. If we do not have access to the labels and the input data is an image, we can augment the input image (cropping, skewing, rotating, ...) to create a similar pair. Since creating the dissimilar pair is more challenging, a common approach is to assume that all the other samples in the training batch are dissimilar.
+
+To train the network, the similar pair is labeled as one, $Y=1$, and the dissimilar pair is labeled as zero, $Y=0$. To minimize the distance $D_W$ between the similar samples while maximizing the distance between the dissimilar ones, DrLIM uses the following loss function: 
 $$
 L(W, Y, X_1, X_2) = (Y)(D_W)^2 + (1-Y)\{ min(0, m-D_W)^2 \}
 $$
@@ -79,7 +81,7 @@ The proposed algorithm has two major steps:
 
 **Training Data**
 
-Fig. 4 shows a sample of the training data which consists of Individual Conditional Expectation (ICE) plots  [[12](https://christophm.github.io/interpretable-ml-book/ice.html)] for a model we trained earlier. The ICE plots display one line per instance that shows how the instance's prediction changes when a feature changes. Therefore, they can be thought of as short time-series. Although this type of data is not ideal for representing time-series, it has an important property that is required for dictionary learning: the samples have similar context.
+Fig. 4 shows a sample of the training data which consists of Individual Conditional Expectation (ICE) plots  [[12](https://christophm.github.io/interpretable-ml-book/ice.html)] of a model trained earlier. The ICE plots display one line per instance that shows how the instance's prediction changes when a feature changes. Therefore, they can be thought of as short time-series. Although this type of data is not ideal for representing time-series, it has an important property that is required for dictionary learning: the samples have similar context.
 
 
 
@@ -162,7 +164,9 @@ Fig. 5 shows the decoder weights that act as the dictionary atoms.
 
 
 
-There are 20 filters which create 20 dictionary atoms (creating an over-complete dictionary). The kernel width is 5 which means the length of each dictionary atom is 5 too. As can be seen in Fig. 5, each of the atoms has learned a particular behaviour/context, e.g. different ascending and descending patterns. Fig. 6 shows some examples of the positive pairs generated using sparse dictionary coding.
+There are 20 filters which create 20 dictionary atoms (creating an over-complete dictionary). The kernel width is 5 which means the length of each dictionary atom is 5 too. As can be seen in Fig. 5, each of the atoms has learned a particular behaviour/context, e.g. different ascending and descending patterns.
+
+Fig. 6 shows some examples of the positive pairs generated using sparse dictionary coding. As can be seen in this figure, the true signal (red) and the reconstructed signal (blue) are very similar. The other two positive pairs (purple and gray) resemble the global behaviour of the original signal but they are different enough to be used for contrastive learning.
 
 ![Fig. 7](./static/PositivePairs_1.png)
 
@@ -172,7 +176,7 @@ There are 20 filters which create 20 dictionary atoms (creating an over-complete
 
 
 
-As can be seen in Fig. 6 the true signal (red) and the reconstructed signal  (blue) are very similar. The two positive pairs resemble the global behaviour of the original signal but they are different enough to be used in contrastive learning.Some examples of the generated negative pairs are shown in Fig. 7. As shown in this figure, the generated negative pairs are semantically different.
+Some examples of the generated negative pairs are shown in Fig. 7. As shown in this figure, the generated negative pairs are semantically different.
 
 ![Fig. 7](./static/NegativePairs_1.png)
 
@@ -202,6 +206,8 @@ As expected, there are some failure cases where the samples are semantically dif
 
 *Fig. 9: Semantically different samples with similar representations in Siamese Network.*
 
-## Limitations & Future Work
+## Discussion and conclusions
 
-The main goal of this blog post is to begin a discussion about the possibility of using sparse coding for time-series data augmentation. The framework proposed here is for proof of concept and it should be improved for real-life scenarios. For instance, the training data might not be a good representative of real time-series data, due to its limited length and size. In addition, the Siamese Network is a fully connected network (MLP), which is not the structure of choice for time-series models. 
+- The main goal of this blog post was to begin a discussion about the possibility of using sparse coding for time-series data augmentation. 
+- We could successfully use the WTA autoencoders to learn sparse representations of time-series data, perform data augmentation, and use the generated data for Contrastive Learning.
+- The framework proposed here is for proof of concept and it should be improved for real-life scenarios. For instance, the training data might not be a good representative of real time-series data, due to its limited length and size. In addition, the Siamese Network is a fully connected network (MLP), which is not the structure of choice for time-series models.
