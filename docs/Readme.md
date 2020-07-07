@@ -30,7 +30,7 @@ In summary, our contrastive learning framework for time-series data consists of 
 
 
 
-## Sparse Dcitionary Learning
+## Sparse Dictionary Learning
 
 Dictionary learning aims at finding an over-complete set of dictionary atoms where data admits a sparse representation. The most important principle of dictionary learning is that the atoms are learned from the data itself, which makes this method different from DCT, Fourier transform, Wavelet transform, and other generic signal representation algorithms. The dictionaries, and the sparse representations are learned by solving the following optimization problem:
 $$
@@ -40,7 +40,7 @@ where we aim to represent the data $X=[x_1 , x_2, ..., x_K], x_i \in R^d$ using 
 
 Solving this optimization problem usually is based on altering between solving for $D$ and $\alpha$, using methods like k-SVD [[6](https://sites.fas.harvard.edu/~cs278/papers/ksvd.pdf)], LASSO [[7](https://arxiv.org/pdf/0804.1302.pdf)], OMP [[8](https://openaccess.thecvf.com/content_iccv_2013/papers/Bao_Fast_Sparsity-Based_Orthogonal_2013_ICCV_paper.pdf)], ADMM [[9](http://ai.stanford.edu/~wzou/zou_bhaskar.pdf)] and FISTA [[10](https://people.rennes.inria.fr/Cedric.Herzet/Cedric.Herzet/Sparse_Seminar/Entrees/2012/11/12_A_Fast_Iterative_Shrinkage-Thresholding_Algorithmfor_Linear_Inverse_Problems_(A._Beck,_M._Teboulle)_files/Breck_2009.pdf)].
 
-### Winner-Take-All Autoencoders
+### Dictionary Learning by Winner-Take-All (WTK) Autoencoders
 
 To learn the sparse dictionaries, we use auto-encoders and more specifically the `Winner-Take-All Autoencoders` [[11](https://papers.nips.cc/paper/5783-winner-take-all-autoencoders.pdf)]. WTA autoencoders are similar to other autoencoders except that the goal is to learn sparse representations rather than dense ones. To achieve this goal, after training the encoder the single largest hidden activity of each feature map is kept and the rest (as well as their derivatives) are set to zero. Next, the decoder reconstructs the output from the sparse feature maps. This results in a sparse representation where the sparsity level is the number of non-zero feature maps. It is noteworthy that if a shallow decoder is used, the weights of the decoder are the atoms of the dictionary.
 
